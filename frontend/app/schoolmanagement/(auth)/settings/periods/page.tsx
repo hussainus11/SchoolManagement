@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTableRowActions } from "@/components/data-table-row-actions";
 import {
   Dialog,
   DialogContent,
@@ -48,6 +49,16 @@ export default function PeriodsPage() {
 
   const { data: periods, isPending } = usePeriods(effectiveBranchId);
   const deletePeriod = useDeletePeriod();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  function handleDelete(id: string) {
+    setDeletingId(id);
+    deletePeriod.mutate(id, {
+      onSuccess: () => toast.success("Period deleted"),
+      onError: (error) => toast.error(error instanceof ApiError ? error.message : "Something went wrong"),
+      onSettled: () => setDeletingId(null)
+    });
+  }
 
   return (
     <Card>
@@ -94,20 +105,12 @@ export default function PeriodsPage() {
                   <TableCell>{period.startTime}</TableCell>
                   <TableCell>{period.endTime}</TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() =>
-                        deletePeriod.mutate(period.id, {
-                          onError: (error) =>
-                            toast.error(
-                              error instanceof ApiError ? error.message : "Something went wrong"
-                            )
-                        })
-                      }
-                      aria-label={`Delete ${period.name}`}>
-                      <Trash2Icon className="size-4" />
-                    </Button>
+                    <DataTableRowActions
+                      onDelete={() => handleDelete(period.id)}
+                      isDeleting={deletePeriod.isPending && deletingId === period.id}
+                      deleteTitle="Delete this period?"
+                      deleteDescription={`This will permanently remove ${period.name} and cannot be undone.`}
+                    />
                   </TableCell>
                 </TableRow>
               ))}

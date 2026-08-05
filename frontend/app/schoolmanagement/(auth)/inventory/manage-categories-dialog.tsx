@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { DataTableRowActions } from "@/components/data-table-row-actions";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,15 @@ export function ManageCategoriesDialog() {
   const { data: categories } = useAssetCategories();
   const createCategory = useCreateAssetCategory();
   const deleteCategory = useDeleteAssetCategory();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  function handleDelete(id: string) {
+    setDeletingId(id);
+    deleteCategory.mutate(id, {
+      onError: (error) => toast.error(error instanceof ApiError ? error.message : "Something went wrong"),
+      onSettled: () => setDeletingId(null)
+    });
+  }
 
   function handleAdd() {
     if (!name.trim()) return;
@@ -55,16 +65,13 @@ export function ManageCategoriesDialog() {
             {categories?.map((c) => (
               <li key={c.id} className="flex items-center justify-between rounded-md border px-3 py-1.5">
                 {c.name}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() =>
-                    deleteCategory.mutate(c.id, {
-                      onError: (error) => toast.error(error instanceof ApiError ? error.message : "Something went wrong")
-                    })
-                  }>
-                  Remove
-                </Button>
+                <DataTableRowActions
+                  onDelete={() => handleDelete(c.id)}
+                  isDeleting={deleteCategory.isPending && deletingId === c.id}
+                  deleteTitle="Remove this category?"
+                  deleteDescription={`This will permanently remove ${c.name} and cannot be undone.`}
+                  deleteLabel="Remove"
+                />
               </li>
             ))}
           </ul>

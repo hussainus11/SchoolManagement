@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { DataTableRowActions } from "@/components/data-table-row-actions";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,15 @@ export function ManageRoomsDialog() {
   const { data: rooms } = useRooms();
   const createRoom = useCreateRoom();
   const deleteRoom = useDeleteRoom();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  function handleDelete(id: string) {
+    setDeletingId(id);
+    deleteRoom.mutate(id, {
+      onError: (error) => toast.error(error instanceof ApiError ? error.message : "Something went wrong"),
+      onSettled: () => setDeletingId(null)
+    });
+  }
 
   function handleOpenChange(next: boolean) {
     if (next) setBranchId((prev) => prev || branches?.[0]?.id || "");
@@ -90,16 +100,13 @@ export function ManageRoomsDialog() {
                   {r.name}
                   {r.capacity != null && <span className="text-muted-foreground"> &middot; cap {r.capacity}</span>}
                 </span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() =>
-                    deleteRoom.mutate(r.id, {
-                      onError: (error) => toast.error(error instanceof ApiError ? error.message : "Something went wrong")
-                    })
-                  }>
-                  Remove
-                </Button>
+                <DataTableRowActions
+                  onDelete={() => handleDelete(r.id)}
+                  isDeleting={deleteRoom.isPending && deletingId === r.id}
+                  deleteTitle="Remove this room?"
+                  deleteDescription={`This will permanently remove ${r.name} and cannot be undone.`}
+                  deleteLabel="Remove"
+                />
               </li>
             ))}
           </ul>

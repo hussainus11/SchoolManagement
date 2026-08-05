@@ -9,12 +9,12 @@ export declare class RouteController {
     findAll(user: JwtPayload): import("../../generated/prisma/internal/prismaNamespace").PrismaPromise<({
         vehicle: {
             id: string;
-            schoolId: string;
             createdAt: Date;
             updatedAt: Date;
+            schoolId: string;
             branchId: string;
-            registrationNumber: string;
             capacity: number | null;
+            registrationNumber: string;
             driverName: string | null;
             driverPhone: string | null;
         };
@@ -28,21 +28,21 @@ export declare class RouteController {
         }[];
     } & {
         id: string;
-        schoolId: string;
-        vehicleId: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        schoolId: string;
+        vehicleId: string;
     })[]>;
     findOne(user: JwtPayload, id: string): Promise<{
         vehicle: {
             id: string;
-            schoolId: string;
             createdAt: Date;
             updatedAt: Date;
+            schoolId: string;
             branchId: string;
-            registrationNumber: string;
             capacity: number | null;
+            registrationNumber: string;
             driverName: string | null;
             driverPhone: string | null;
         };
@@ -56,21 +56,21 @@ export declare class RouteController {
         }[];
     } & {
         id: string;
-        schoolId: string;
-        vehicleId: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        schoolId: string;
+        vehicleId: string;
     }>;
     create(user: JwtPayload, dto: CreateRouteDto): Promise<{
         vehicle: {
             id: string;
-            schoolId: string;
             createdAt: Date;
             updatedAt: Date;
+            schoolId: string;
             branchId: string;
-            registrationNumber: string;
             capacity: number | null;
+            registrationNumber: string;
             driverName: string | null;
             driverPhone: string | null;
         };
@@ -84,21 +84,21 @@ export declare class RouteController {
         }[];
     } & {
         id: string;
-        schoolId: string;
-        vehicleId: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        schoolId: string;
+        vehicleId: string;
     }>;
     update(user: JwtPayload, id: string, dto: UpdateRouteDto): Promise<{
         vehicle: {
             id: string;
-            schoolId: string;
             createdAt: Date;
             updatedAt: Date;
+            schoolId: string;
             branchId: string;
-            registrationNumber: string;
             capacity: number | null;
+            registrationNumber: string;
             driverName: string | null;
             driverPhone: string | null;
         };
@@ -112,11 +112,11 @@ export declare class RouteController {
         }[];
     } & {
         id: string;
-        schoolId: string;
-        vehicleId: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        schoolId: string;
+        vehicleId: string;
     }>;
     remove(user: JwtPayload, id: string): Promise<void>;
     addStop(user: JwtPayload, id: string, dto: CreateRouteStopDto): Promise<{

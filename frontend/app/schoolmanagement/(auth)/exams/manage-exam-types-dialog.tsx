@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { DataTableRowActions } from "@/components/data-table-row-actions";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,15 @@ export function ManageExamTypesDialog() {
   const { data: examTypes } = useExamTypes();
   const createExamType = useCreateExamType();
   const deleteExamType = useDeleteExamType();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  function handleDelete(id: string) {
+    setDeletingId(id);
+    deleteExamType.mutate(id, {
+      onError: (error) => toast.error(error instanceof ApiError ? error.message : "Something went wrong"),
+      onSettled: () => setDeletingId(null)
+    });
+  }
 
   function handleAdd() {
     if (!name.trim()) return;
@@ -55,16 +65,13 @@ export function ManageExamTypesDialog() {
             {examTypes?.map((t) => (
               <li key={t.id} className="flex items-center justify-between rounded-md border px-3 py-1.5">
                 {t.name}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() =>
-                    deleteExamType.mutate(t.id, {
-                      onError: (error) => toast.error(error instanceof ApiError ? error.message : "Something went wrong")
-                    })
-                  }>
-                  Remove
-                </Button>
+                <DataTableRowActions
+                  onDelete={() => handleDelete(t.id)}
+                  isDeleting={deleteExamType.isPending && deletingId === t.id}
+                  deleteTitle="Remove this exam type?"
+                  deleteDescription={`This will permanently remove ${t.name} and cannot be undone.`}
+                  deleteLabel="Remove"
+                />
               </li>
             ))}
           </ul>

@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTableRowActions } from "@/components/data-table-row-actions";
 import {
   Dialog,
   DialogContent,
@@ -48,6 +49,16 @@ export default function FeeStructuresPage() {
   const { data: feeHeads } = useFeeHeads();
   const { data: structures, isPending } = useFeeStructures({ academicYearId: effectiveYearId });
   const deleteStructure = useDeleteFeeStructure();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  function handleDelete(id: string) {
+    setDeletingId(id);
+    deleteStructure.mutate(id, {
+      onSuccess: () => toast.success("Fee structure deleted"),
+      onError: (error) => toast.error(error instanceof ApiError ? error.message : "Something went wrong"),
+      onSettled: () => setDeletingId(null)
+    });
+  }
 
   return (
     <Card>
@@ -101,20 +112,12 @@ export default function FeeStructuresPage() {
                   <TableCell>{Number(s.amount).toFixed(2)}</TableCell>
                   <TableCell>{s.frequency}</TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() =>
-                        deleteStructure.mutate(s.id, {
-                          onError: (error) =>
-                            toast.error(
-                              error instanceof ApiError ? error.message : "Something went wrong"
-                            )
-                        })
-                      }
-                      aria-label="Delete fee structure">
-                      <Trash2Icon className="size-4" />
-                    </Button>
+                    <DataTableRowActions
+                      onDelete={() => handleDelete(s.id)}
+                      isDeleting={deleteStructure.isPending && deletingId === s.id}
+                      deleteTitle="Delete this fee structure?"
+                      deleteDescription={`This will permanently remove the ${s.feeHead.name} fee structure for ${s.class.name} and cannot be undone.`}
+                    />
                   </TableCell>
                 </TableRow>
               ))}

@@ -8,12 +8,12 @@ export declare class RouteService {
     findAllForSchool(schoolId: string): import("../../generated/prisma/internal/prismaNamespace").PrismaPromise<({
         vehicle: {
             id: string;
-            schoolId: string;
             createdAt: Date;
             updatedAt: Date;
+            schoolId: string;
             branchId: string;
-            registrationNumber: string;
             capacity: number | null;
+            registrationNumber: string;
             driverName: string | null;
             driverPhone: string | null;
         };
@@ -27,21 +27,21 @@ export declare class RouteService {
         }[];
     } & {
         id: string;
-        schoolId: string;
-        vehicleId: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        schoolId: string;
+        vehicleId: string;
     })[]>;
     findOneForSchool(schoolId: string, id: string): Promise<{
         vehicle: {
             id: string;
-            schoolId: string;
             createdAt: Date;
             updatedAt: Date;
+            schoolId: string;
             branchId: string;
-            registrationNumber: string;
             capacity: number | null;
+            registrationNumber: string;
             driverName: string | null;
             driverPhone: string | null;
         };
@@ -55,22 +55,22 @@ export declare class RouteService {
         }[];
     } & {
         id: string;
-        schoolId: string;
-        vehicleId: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        schoolId: string;
+        vehicleId: string;
     }>;
     private assertVehicleInSchool;
     create(schoolId: string, dto: CreateRouteDto): Promise<{
         vehicle: {
             id: string;
-            schoolId: string;
             createdAt: Date;
             updatedAt: Date;
+            schoolId: string;
             branchId: string;
-            registrationNumber: string;
             capacity: number | null;
+            registrationNumber: string;
             driverName: string | null;
             driverPhone: string | null;
         };
@@ -84,21 +84,21 @@ export declare class RouteService {
         }[];
     } & {
         id: string;
-        schoolId: string;
-        vehicleId: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        schoolId: string;
+        vehicleId: string;
     }>;
     update(schoolId: string, id: string, dto: UpdateRouteDto): Promise<{
         vehicle: {
             id: string;
-            schoolId: string;
             createdAt: Date;
             updatedAt: Date;
+            schoolId: string;
             branchId: string;
-            registrationNumber: string;
             capacity: number | null;
+            registrationNumber: string;
             driverName: string | null;
             driverPhone: string | null;
         };
@@ -112,11 +112,11 @@ export declare class RouteService {
         }[];
     } & {
         id: string;
-        schoolId: string;
-        vehicleId: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
+        schoolId: string;
+        vehicleId: string;
     }>;
     remove(schoolId: string, id: string): Promise<void>;
     addStop(schoolId: string, routeId: string, dto: CreateRouteStopDto): Promise<{

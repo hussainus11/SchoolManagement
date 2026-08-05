@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { DataTableRowActions } from "@/components/data-table-row-actions";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,18 @@ export function ManageStopsDialog({ route }: { route: TransportRoute }) {
   const [fee, setFee] = useState("");
   const addStop = useAddRouteStop();
   const removeStop = useRemoveRouteStop();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  function handleDelete(stopId: string) {
+    setDeletingId(stopId);
+    removeStop.mutate(
+      { routeId: route.id, stopId },
+      {
+        onError: (error) => toast.error(error instanceof ApiError ? error.message : "Something went wrong"),
+        onSettled: () => setDeletingId(null)
+      }
+    );
+  }
 
   function handleAdd() {
     if (!name.trim() || !fee) return;
@@ -67,20 +80,13 @@ export function ManageStopsDialog({ route }: { route: TransportRoute }) {
                 <span>
                   {s.name} <span className="text-muted-foreground">&middot; fee {s.fee}</span>
                 </span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() =>
-                    removeStop.mutate(
-                      { routeId: route.id, stopId: s.id },
-                      {
-                        onError: (error) =>
-                          toast.error(error instanceof ApiError ? error.message : "Something went wrong")
-                      }
-                    )
-                  }>
-                  Remove
-                </Button>
+                <DataTableRowActions
+                  onDelete={() => handleDelete(s.id)}
+                  isDeleting={removeStop.isPending && deletingId === s.id}
+                  deleteTitle="Remove this stop?"
+                  deleteDescription={`This will permanently remove ${s.name} and cannot be undone.`}
+                  deleteLabel="Remove"
+                />
               </li>
             ))}
             {route.stops.length === 0 && <p className="text-muted-foreground text-sm">No stops yet.</p>}

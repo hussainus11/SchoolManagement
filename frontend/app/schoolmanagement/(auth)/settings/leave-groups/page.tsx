@@ -10,6 +10,7 @@ import { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTableRowActions } from "@/components/data-table-row-actions";
 import {
   Dialog,
   DialogContent,
@@ -48,10 +49,14 @@ type LeaveGroupFormValues = z.infer<typeof leaveGroupFormSchema>;
 export default function LeaveGroupsPage() {
   const { data: groups, isPending } = useLeaveGroups();
   const deleteGroup = useDeleteLeaveGroup();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   function handleDelete(group: LeaveGroup) {
+    setDeletingId(group.id);
     deleteGroup.mutate(group.id, {
-      onError: (error) => toast.error(error instanceof ApiError ? error.message : "Something went wrong")
+      onSuccess: () => toast.success("Leave group deleted"),
+      onError: (error) => toast.error(error instanceof ApiError ? error.message : "Something went wrong"),
+      onSettled: () => setDeletingId(null)
     });
   }
 
@@ -102,9 +107,12 @@ export default function LeaveGroupsPage() {
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
                       <LeaveGroupDialog group={group} />
-                      <Button size="icon" variant="ghost" onClick={() => handleDelete(group)}>
-                        <Trash2Icon className="size-4" />
-                      </Button>
+                      <DataTableRowActions
+                        onDelete={() => handleDelete(group)}
+                        isDeleting={deleteGroup.isPending && deletingId === group.id}
+                        deleteTitle="Delete this leave group?"
+                        deleteDescription={`This will permanently remove ${group.name} and cannot be undone.`}
+                      />
                     </div>
                   </TableCell>
                 </TableRow>

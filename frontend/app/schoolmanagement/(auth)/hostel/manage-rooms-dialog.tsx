@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { DataTableRowActions } from "@/components/data-table-row-actions";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,18 @@ export function ManageRoomsDialog({ hostel }: { hostel: Hostel }) {
   const [capacity, setCapacity] = useState("");
   const addRoom = useAddHostelRoom();
   const removeRoom = useRemoveHostelRoom();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  function handleDelete(roomId: string) {
+    setDeletingId(roomId);
+    removeRoom.mutate(
+      { hostelId: hostel.id, roomId },
+      {
+        onError: (error) => toast.error(error instanceof ApiError ? error.message : "Something went wrong"),
+        onSettled: () => setDeletingId(null)
+      }
+    );
+  }
 
   function handleAdd() {
     if (!roomNumber.trim() || !capacity) return;
@@ -70,20 +83,13 @@ export function ManageRoomsDialog({ hostel }: { hostel: Hostel }) {
                     &middot; {r.allocations.length}/{r.capacity} occupied
                   </span>
                 </span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() =>
-                    removeRoom.mutate(
-                      { hostelId: hostel.id, roomId: r.id },
-                      {
-                        onError: (error) =>
-                          toast.error(error instanceof ApiError ? error.message : "Something went wrong")
-                      }
-                    )
-                  }>
-                  Remove
-                </Button>
+                <DataTableRowActions
+                  onDelete={() => handleDelete(r.id)}
+                  isDeleting={removeRoom.isPending && deletingId === r.id}
+                  deleteTitle="Remove this room?"
+                  deleteDescription={`This will permanently remove room ${r.roomNumber} and cannot be undone.`}
+                  deleteLabel="Remove"
+                />
               </li>
             ))}
             {hostel.rooms.length === 0 && <p className="text-muted-foreground text-sm">No rooms yet.</p>}

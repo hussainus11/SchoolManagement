@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTableRowActions } from "@/components/data-table-row-actions";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,16 @@ type FeeHeadFormValues = z.infer<typeof feeHeadFormSchema>;
 export default function FeeHeadsPage() {
   const { data: feeHeads, isPending } = useFeeHeads();
   const deleteFeeHead = useDeleteFeeHead();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  function handleDelete(id: string) {
+    setDeletingId(id);
+    deleteFeeHead.mutate(id, {
+      onSuccess: () => toast.success("Fee head deleted"),
+      onError: (error) => toast.error(error instanceof ApiError ? error.message : "Something went wrong"),
+      onSettled: () => setDeletingId(null)
+    });
+  }
 
   return (
     <Card>
@@ -58,20 +69,12 @@ export default function FeeHeadsPage() {
                 <TableRow key={feeHead.id}>
                   <TableCell className="font-medium">{feeHead.name}</TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() =>
-                        deleteFeeHead.mutate(feeHead.id, {
-                          onError: (error) =>
-                            toast.error(
-                              error instanceof ApiError ? error.message : "Something went wrong"
-                            )
-                        })
-                      }
-                      aria-label={`Delete ${feeHead.name}`}>
-                      <Trash2Icon className="size-4" />
-                    </Button>
+                    <DataTableRowActions
+                      onDelete={() => handleDelete(feeHead.id)}
+                      isDeleting={deleteFeeHead.isPending && deletingId === feeHead.id}
+                      deleteTitle="Delete this fee head?"
+                      deleteDescription={`This will permanently remove ${feeHead.name} and cannot be undone.`}
+                    />
                   </TableCell>
                 </TableRow>
               ))}

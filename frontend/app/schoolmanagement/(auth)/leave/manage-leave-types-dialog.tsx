@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { DataTableRowActions } from "@/components/data-table-row-actions";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,15 @@ export function ManageLeaveTypesDialog() {
   const { data: leaveTypes } = useLeaveTypes();
   const createLeaveType = useCreateLeaveType();
   const deleteLeaveType = useDeleteLeaveType();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  function handleDelete(id: string) {
+    setDeletingId(id);
+    deleteLeaveType.mutate(id, {
+      onError: (error) => toast.error(error instanceof ApiError ? error.message : "Something went wrong"),
+      onSettled: () => setDeletingId(null)
+    });
+  }
 
   function handleAdd() {
     if (!name.trim()) return;
@@ -63,16 +73,13 @@ export function ManageLeaveTypesDialog() {
             {leaveTypes?.map((t) => (
               <li key={t.id} className="flex items-center justify-between rounded-md border px-3 py-1.5">
                 <span>{t.name}</span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() =>
-                    deleteLeaveType.mutate(t.id, {
-                      onError: (error) => toast.error(error instanceof ApiError ? error.message : "Something went wrong")
-                    })
-                  }>
-                  Remove
-                </Button>
+                <DataTableRowActions
+                  onDelete={() => handleDelete(t.id)}
+                  isDeleting={deleteLeaveType.isPending && deletingId === t.id}
+                  deleteTitle="Remove this leave type?"
+                  deleteDescription={`This will permanently remove ${t.name} and cannot be undone.`}
+                  deleteLabel="Remove"
+                />
               </li>
             ))}
           </ul>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { DataTableRowActions } from "@/components/data-table-row-actions";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,15 @@ export function ManageGradeScalesDialog() {
   const { data: gradeScales } = useGradeScales();
   const createGradeScale = useCreateGradeScale();
   const deleteGradeScale = useDeleteGradeScale();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  function handleDelete(id: string) {
+    setDeletingId(id);
+    deleteGradeScale.mutate(id, {
+      onError: (error) => toast.error(error instanceof ApiError ? error.message : "Something went wrong"),
+      onSettled: () => setDeletingId(null)
+    });
+  }
 
   function handleAdd() {
     if (!grade.trim() || !minPercentage || !maxPercentage) return;
@@ -77,16 +87,13 @@ export function ManageGradeScalesDialog() {
                 <span>
                   {g.grade} <span className="text-muted-foreground">({g.minPercentage}% - {g.maxPercentage}%)</span>
                 </span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() =>
-                    deleteGradeScale.mutate(g.id, {
-                      onError: (error) => toast.error(error instanceof ApiError ? error.message : "Something went wrong")
-                    })
-                  }>
-                  Remove
-                </Button>
+                <DataTableRowActions
+                  onDelete={() => handleDelete(g.id)}
+                  isDeleting={deleteGradeScale.isPending && deletingId === g.id}
+                  deleteTitle="Remove this grade?"
+                  deleteDescription={`This will permanently remove grade ${g.grade} and cannot be undone.`}
+                  deleteLabel="Remove"
+                />
               </li>
             ))}
           </ul>

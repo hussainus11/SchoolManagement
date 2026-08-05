@@ -114,6 +114,7 @@ export default function InventoryPage() {
           </Select>
         }
       />
+      <EditAssetDialog asset={editingAsset} onOpenChange={(open) => !open && setEditingAsset(null)} />
     </div>
   );
 }

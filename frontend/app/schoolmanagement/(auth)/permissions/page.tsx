@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DataTableRowActions } from "@/components/data-table-row-actions";
 import {
   Dialog,
   DialogContent,
@@ -210,6 +211,7 @@ function RolesTab() {
   const { data: roles, isPending } = useCustomRoles();
   const updateRole = useUpdateCustomRole();
   const deleteRole = useDeleteCustomRole();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   function toggleAllowLogin(role: CustomRole) {
     updateRole.mutate(
@@ -221,9 +223,11 @@ function RolesTab() {
   }
 
   function handleDelete(role: CustomRole) {
+    setDeletingId(role.id);
     deleteRole.mutate(role.id, {
       onSuccess: () => toast.success(`Role "${role.name}" deleted`),
-      onError: (error) => toast.error(error instanceof ApiError ? error.message : "Something went wrong")
+      onError: (error) => toast.error(error instanceof ApiError ? error.message : "Something went wrong"),
+      onSettled: () => setDeletingId(null)
     });
   }
 
@@ -260,9 +264,12 @@ function RolesTab() {
                     {(role._count?.teachers ?? 0) + (role._count?.staff ?? 0)}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button size="icon" variant="ghost" onClick={() => handleDelete(role)}>
-                      <Trash2Icon className="text-destructive size-4" />
-                    </Button>
+                    <DataTableRowActions
+                      onDelete={() => handleDelete(role)}
+                      isDeleting={deleteRole.isPending && deletingId === role.id}
+                      deleteTitle="Delete this role?"
+                      deleteDescription={`This will permanently remove the "${role.name}" role and cannot be undone.`}
+                    />
                   </TableCell>
                 </TableRow>
               ))}

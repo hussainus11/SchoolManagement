@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ArrowRightLeftIcon, BookIcon } from "lucide-react";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/data-table";
+import { DataTableRowActions } from "@/components/data-table-row-actions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   type Book,
@@ -33,9 +34,19 @@ const STATUS_VARIANT: Record<BookIssueStatus, "default" | "secondary" | "destruc
 function CatalogTab() {
   const { data: books, isPending } = useBooks();
   const deleteBook = useDeleteBook();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   function handleError(error: unknown) {
     toast.error(error instanceof ApiError ? error.message : "Something went wrong");
+  }
+
+  function handleDelete(id: string) {
+    setDeletingId(id);
+    deleteBook.mutate(id, {
+      onSuccess: () => toast.success("Book deleted"),
+      onError: handleError,
+      onSettled: () => setDeletingId(null)
+    });
   }
 
   const columns: ColumnDef<Book>[] = useMemo(
@@ -53,17 +64,17 @@ function CatalogTab() {
         header: "",
         cell: ({ row }) => (
           <div className="flex justify-end">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => deleteBook.mutate(row.original.id, { onError: handleError })}>
-              Delete
-            </Button>
+            <DataTableRowActions
+              onDelete={() => handleDelete(row.original.id)}
+              isDeleting={deleteBook.isPending && deletingId === row.original.id}
+              deleteTitle="Delete this book?"
+              deleteDescription={`This will permanently remove "${row.original.title}" and cannot be undone.`}
+            />
           </div>
         )
       }
     ],
-    [deleteBook]
+    [deleteBook.isPending, deletingId]
   );
 
   return (
