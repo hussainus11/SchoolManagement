@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "SchoolEvent" ADD COLUMN     "location" TEXT,
+ALTER COLUMN "startDate" SET DATA TYPE TIMESTAMP(3),
+ALTER COLUMN "endDate" SET DATA TYPE TIMESTAMP(3);
