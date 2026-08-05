@@ -11,7 +11,10 @@ export function setRefreshCookie(res: Response, token: string, expiresAt: Date) 
   res.cookie(REFRESH_COOKIE_NAME, token, {
     httpOnly: true,
     secure: COOKIE_SECURE,
-    sameSite: "lax",
+    // Cross-site deployments (frontend and backend on different domains, e.g. Netlify + Render)
+    // require SameSite=None, which browsers only honor when Secure is also set. Local http dev
+    // stays "lax" since "none" cookies are rejected without https.
+    sameSite: COOKIE_SECURE ? "none" : "lax",
     path: "/",
     expires: expiresAt
   });
