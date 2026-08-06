@@ -29,6 +29,11 @@ import { ApiError } from "@/lib/api/client";
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
+function toMinutes(time: string) {
+  const [hours, minutes] = time.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
 const periodFormSchema = z
   .object({
     name: z.string().min(1, "Name is required").max(50),
@@ -36,7 +41,9 @@ const periodFormSchema = z
     endTime: z.string().regex(TIME_PATTERN, "Use HH:mm 24-hour format"),
     order: z.coerce.number().int().optional()
   })
-  .refine((data) => data.endTime > data.startTime, {
+  // Compared as minutes-since-midnight, not as strings — "10:00" > "9:00" is false lexically
+  // even though 10:00 is later, since "1" sorts before "9".
+  .refine((data) => toMinutes(data.endTime) > toMinutes(data.startTime), {
     message: "End time must be after start time",
     path: ["endTime"]
   });
@@ -190,7 +197,7 @@ function CreatePeriodDialog({ branchId }: { branchId?: string }) {
                   <FormItem>
                     <FormLabel>Start time</FormLabel>
                     <FormControl>
-                      <Input placeholder="09:00" {...field} />
+                      <Input type="time" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -203,7 +210,7 @@ function CreatePeriodDialog({ branchId }: { branchId?: string }) {
                   <FormItem>
                     <FormLabel>End time</FormLabel>
                     <FormControl>
-                      <Input placeholder="09:45" {...field} />
+                      <Input type="time" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

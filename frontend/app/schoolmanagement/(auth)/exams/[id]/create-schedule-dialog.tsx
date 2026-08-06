@@ -222,7 +222,7 @@ export function CreateScheduleDialog({ examId }: { examId: string }) {
                   <FormItem>
                     <FormLabel>Start time</FormLabel>
                     <FormControl>
-                      <Input placeholder="09:00" {...field} />
+                      <Input type="time" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -235,7 +235,7 @@ export function CreateScheduleDialog({ examId }: { examId: string }) {
                   <FormItem>
                     <FormLabel>End time</FormLabel>
                     <FormControl>
-                      <Input placeholder="10:00" {...field} />
+                      <Input type="time" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
