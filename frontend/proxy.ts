@@ -1,6 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const REFRESH_COOKIE_NAME = "refresh_token";
+// Kept as a literal (not imported from lib/store/auth-store.ts) so the edge middleware bundle
+// doesn't pull in zustand. Must match SESSION_MARKER_COOKIE there. This is a same-origin marker
+// cookie the frontend sets itself on login/onboarding/refresh — NOT the backend's httpOnly
+// refresh_token cookie, which lives on a different domain and is invisible to this middleware.
+const SESSION_MARKER_COOKIE = "sm_session";
 
 // Accessible regardless of auth state; never redirected either way. reset-password lives here
 // (not GUEST_ONLY_PATHS) because an already-authenticated browser should still be able to use a
@@ -30,7 +34,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const isAuthenticated = Boolean(request.cookies.get(REFRESH_COOKIE_NAME)?.value);
+  const isAuthenticated = Boolean(request.cookies.get(SESSION_MARKER_COOKIE)?.value);
   const isGuestOnly = matchesAny(pathname, GUEST_ONLY_PATHS);
 
   if (!isAuthenticated && !isGuestOnly) {
