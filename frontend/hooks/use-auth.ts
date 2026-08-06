@@ -93,6 +93,31 @@ export function useChangePassword() {
   });
 }
 
+export function useForgotPassword() {
+  return useMutation({
+    mutationFn: (input: { email: string }) =>
+      apiFetch<{ message: string }>("/auth/forgot-password", {
+        method: "POST",
+        skipAuth: true,
+        body: JSON.stringify(input)
+      })
+  });
+}
+
+export function useResetPassword() {
+  const setSession = useAuthStore((s) => s.setSession);
+
+  return useMutation({
+    mutationFn: (input: { token: string; newPassword: string }) =>
+      apiFetch<SessionResponse>("/auth/reset-password", {
+        method: "POST",
+        skipAuth: true,
+        body: JSON.stringify(input)
+      }),
+    onSuccess: (data) => setSession(data.accessToken, data.user)
+  });
+}
+
 export function useLogout() {
   const clear = useAuthStore((s) => s.clear);
   const queryClient = useQueryClient();

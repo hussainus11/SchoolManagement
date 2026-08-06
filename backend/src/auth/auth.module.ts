@@ -3,6 +3,7 @@ import { JwtModule } from "@nestjs/jwt";
 import type { JwtSignOptions } from "@nestjs/jwt";
 import { PassportModule } from "@nestjs/passport";
 import { AuditModule } from "../audit/audit.module";
+import { MailerService } from "../common/mailer.service";
 import { UsersModule } from "../users/users.module";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
@@ -21,7 +22,7 @@ import { JwtStrategy } from "./strategies/jwt.strategy";
     })
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, MailerService],
   exports: [AuthService]
 })
 export class AuthModule {}

@@ -44,6 +44,7 @@ export const RESOURCE_CATALOG: ResourceCatalogItem[] = [
   { key: "visitors", label: "Visitors", group: "Extras" },
   { key: "alumni", label: "Alumni", group: "Extras" },
   { key: "id-cards", label: "ID Cards", group: "Extras" },
+  { key: "certificates", label: "Certificates", group: "Extras" },
   { key: "audit-log", label: "Audit Log", group: "Extras" }
 ];
 

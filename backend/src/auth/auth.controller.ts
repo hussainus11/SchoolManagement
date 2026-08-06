@@ -17,7 +17,9 @@ import { CurrentUser } from "./decorators/current-user.decorator";
 import { Public } from "./decorators/public.decorator";
 import { SkipPasswordCheck } from "./decorators/skip-password-check.decorator";
 import { ChangePasswordDto } from "./dto/change-password.dto";
+import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { LoginDto } from "./dto/login.dto";
+import { ResetPasswordDto } from "./dto/reset-password.dto";
 import type { JwtPayload } from "./types/jwt-payload.type";
 
 @Controller("auth")
@@ -74,6 +76,31 @@ export class AuthController {
     const user = await this.usersService.findById(payload.sub);
     if (!user) throw new UnauthorizedException();
     return AuthService.toSafeUser(user);
+  }
+
+  @Public()
+  @Post("forgot-password")
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    await this.authService.forgotPassword(dto.email);
+    // Always the same response, whether or not the email matched an account.
+    return { message: "If an account exists for that email, a reset link has been sent." };
+  }
+
+  @Public()
+  @Post("reset-password")
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(
+    @Body() dto: ResetPasswordDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response
+  ) {
+    const { tokens, user } = await this.authService.resetPassword(dto.token, dto.newPassword, {
+      userAgent: req.headers["user-agent"] as string | undefined,
+      ipAddress: req.ip
+    });
+    setRefreshCookie(res, tokens.refreshToken, tokens.refreshTokenExpiresAt);
+    return { accessToken: tokens.accessToken, user };
   }
 
   @Post("change-password")

@@ -23,7 +23,8 @@ export function generateMeta({
   canonical: string;
 }): Metadata {
   return {
-    title: `${title} - School Management`,
+    // The root layout's title template already appends " - School Management".
+    title,
     description: description,
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3002"),
     alternates: {

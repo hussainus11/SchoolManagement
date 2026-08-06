@@ -20,12 +20,15 @@ import { NavUser } from "@/components/layout/sidebar/nav-user";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Logo from "@/components/layout/logo";
 import { useSchool } from "@/hooks/use-school-settings";
+import { resolveApiUrl } from "@/lib/api/client";
+import { useAuthStore } from "@/lib/store/auth-store";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { setOpen, setOpenMobile, isMobile } = useSidebar();
   const isTablet = useIsTablet();
-  const { data: school } = useSchool();
+  const schoolId = useAuthStore((s) => s.user?.schoolId);
+  const { data: school } = useSchool(!!schoolId);
 
   useEffect(() => {
     if (isMobile) setOpenMobile(false);
@@ -41,8 +44,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton className="hover:text-foreground h-10 cursor-default group-data-[collapsible=icon]:px-0! hover:bg-transparent">
-              <Logo />
-              <span className="truncate font-semibold">{school?.name ?? "School"}</span>
+              {school?.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={resolveApiUrl(school.logoUrl)}
+                  alt={school.name}
+                  className="me-1 size-8 rounded-[5px] object-cover transition-all group-data-[collapsible=icon]:size-8"
+                />
+              ) : (
+                <Logo />
+              )}
+              <span className="truncate font-semibold">
+                {school?.name ?? (schoolId ? "School" : "Platform Admin")}
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

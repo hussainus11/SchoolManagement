@@ -29,6 +29,7 @@ import {
   ClipboardListIcon,
   ClockIcon,
   ContactRoundIcon,
+  CreditCardIcon,
   FileSpreadsheetIcon,
   GaugeIcon,
   GraduationCapIcon,
@@ -44,6 +45,7 @@ import {
   ReceiptIcon,
   ReceiptTextIcon,
   SchoolIcon,
+  Building2Icon,
   SettingsIcon,
   ShieldAlertIcon,
   TagIcon,
@@ -92,6 +94,17 @@ type NavItem = {
 
 export const navItems: NavGroup[] = [
   {
+    title: "Platform",
+    roles: ["SUPER_ADMIN"],
+    items: [
+      {
+        title: "Schools",
+        href: "/schoolmanagement/schools",
+        icon: Building2Icon
+      }
+    ]
+  },
+  {
     title: "School",
     items: [
       {
@@ -111,7 +124,8 @@ export const navItems: NavGroup[] = [
           { title: "Academic years", href: "/schoolmanagement/settings/academic-years", icon: CalendarRangeIcon },
           { title: "ID card design", href: "/schoolmanagement/settings/id-cards", icon: IdCardIcon },
           { title: "Periods", href: "/schoolmanagement/settings/periods", icon: ClockIcon },
-          { title: "Leave groups", href: "/schoolmanagement/settings/leave-groups", icon: CalendarOffIcon }
+          { title: "Leave groups", href: "/schoolmanagement/settings/leave-groups", icon: CalendarOffIcon },
+          { title: "Billing", href: "/schoolmanagement/settings/billing", icon: CreditCardIcon }
         ]
       },
       {
@@ -313,6 +327,12 @@ export const navItems: NavGroup[] = [
         resource: "id-cards"
       },
       {
+        title: "Certificates",
+        href: "/schoolmanagement/certificates",
+        icon: AwardIcon,
+        resource: "certificates"
+      },
+      {
         title: "Audit log",
         href: "/schoolmanagement/audit-logs",
         icon: HistoryIcon,
@@ -354,6 +374,10 @@ export const navItems: NavGroup[] = [
 ];
 
 const PORTAL_ROLES: Role[] = ["PARENT", "STUDENT"];
+// SUPER_ADMIN has no schoolId, so the regular tenant-scoped groups below (which assume one) would
+// just show broken/empty pages for them. They only get groups that explicitly opt them in, same
+// as how PARENT/STUDENT are excluded from the default set and only see "Portal".
+const PLATFORM_ROLES: Role[] = ["SUPER_ADMIN"];
 
 export function NavMain() {
   const pathname = usePathname();
@@ -370,7 +394,7 @@ export function NavMain() {
   const visibleGroups = navItems
     .filter((nav) => {
       if (nav.roles) return !!role && nav.roles.includes(role);
-      return !role || !PORTAL_ROLES.includes(role);
+      return !role || (!PORTAL_ROLES.includes(role) && !PLATFORM_ROLES.includes(role));
     })
     .map((nav) => ({ ...nav, items: nav.items.filter(itemVisible) }))
     .filter((nav) => nav.items.length > 0);

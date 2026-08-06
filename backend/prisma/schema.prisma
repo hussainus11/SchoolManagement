@@ -178,6 +178,9 @@ model School {
   idCardForegroundColor    String   @default("#FFFFFF")
   idCardBackgroundImageUrl String?
   isActive                 Boolean  @default(true)
+  /** When this school's current trial/paid period ends. Set to now + 10 days on registration;
+   *  extended by a SUPER_ADMIN via BillingRecord when the school pays. */
+  nextBillingDate          DateTime?
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 
@@ -233,6 +236,25 @@ model School {
   alumni              Alumni[]
   documents           Document[]
   customRoles         CustomRole[]
+  billingRecords      BillingRecord[]
+}
+
+/** One entry per time a SUPER_ADMIN extends a school's billing period, e.g. after receiving
+ *  payment. periodStart/periodEnd capture what span this specific extension covers. */
+model BillingRecord {
+  id           String   @id @default(cuid())
+  schoolId     String
+  amount       Decimal? @db.Decimal(10, 2)
+  note         String?
+  periodStart  DateTime
+  periodEnd    DateTime
+  recordedById String
+  createdAt    DateTime @default(now())
+
+  school     School @relation(fields: [schoolId], references: [id])
+  recordedBy User   @relation("BillingRecordedBy", fields: [recordedById], references: [id])
+
+  @@index([schoolId])
 }
 
 model Branch {
@@ -331,8 +353,23 @@ model User {
   approvedLeaveRequests    LeaveRequest[]         @relation("LeaveApprovedBy")
   reportedIncidents        DisciplineIncident[]   @relation("IncidentReportedBy")
   uploadedDocuments        Document[]
+  recordedBillingRecords   BillingRecord[]        @relation("BillingRecordedBy")
+  passwordResetTokens      PasswordResetToken[]
 
   @@index([schoolId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }
 
 model RefreshToken {

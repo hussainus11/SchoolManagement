@@ -2,8 +2,10 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const REFRESH_COOKIE_NAME = "refresh_token";
 
-// Accessible regardless of auth state; never redirected either way.
-const PUBLIC_PATHS = ["/schoolmanagement/pages/error"];
+// Accessible regardless of auth state; never redirected either way. reset-password lives here
+// (not GUEST_ONLY_PATHS) because an already-authenticated browser should still be able to use a
+// reset link — otherwise a stale/different session on the same device would bounce it away.
+const PUBLIC_PATHS = ["/schoolmanagement/pages/error", "/schoolmanagement/reset-password"];
 
 // Only accessible when NOT authenticated; authenticated users get bounced to the dashboard.
 const GUEST_ONLY_PATHS = [

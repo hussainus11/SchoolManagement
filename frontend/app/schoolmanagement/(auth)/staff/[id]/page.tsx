@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
 
+import { BackButton } from "@/components/back-button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -40,6 +41,7 @@ export default function StaffDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
+        <BackButton href="/schoolmanagement/staff" />
         <PhotoUpload
           imageUrl={staff.photoUrl}
           fallbackText={`${staff.user.firstName[0] ?? ""}${staff.user.lastName[0] ?? ""}`}

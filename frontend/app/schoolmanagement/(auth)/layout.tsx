@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/sidebar/app-sidebar";
+import { DynamicBranding } from "@/components/layout/dynamic-branding";
 import { SiteHeader } from "@/components/layout/header";
 import { AuthGate } from "@/components/layout/auth-gate";
 
@@ -18,6 +19,7 @@ export default async function AuthLayout({
 
   return (
     <AuthGate>
+      <DynamicBranding />
       <SidebarProvider
         defaultOpen={defaultOpen}
         style={

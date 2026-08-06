@@ -33,6 +33,7 @@ import {
   useUpdateLeaveGroup
 } from "@/hooks/use-leave-groups";
 import { ApiError } from "@/lib/api/client";
+import { ManageLeaveTypesDialog } from "../../leave/manage-leave-types-dialog";
 
 const allocationSchema = z.object({
   leaveTypeId: z.string().min(1, "Select a leave type"),
@@ -63,14 +64,11 @@ export default function LeaveGroupsPage() {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle>Leave groups</CardTitle>
-          <p className="text-muted-foreground text-sm">
-            Define how many days of each leave type a group of teachers or staff can take per year. Assign a
-            group when creating or editing a teacher or staff member.
-          </p>
+        <CardTitle>Leave groups</CardTitle>
+        <div className="flex gap-2">
+          <ManageLeaveTypesDialog />
+          <LeaveGroupDialog />
         </div>
-        <LeaveGroupDialog />
       </CardHeader>
       <CardContent>
         {isPending ? (

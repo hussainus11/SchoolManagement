@@ -37,6 +37,10 @@ export default function Page() {
           router.push("/schoolmanagement/change-password");
           return;
         }
+        if (data.user.role === "SUPER_ADMIN") {
+          router.push("/schoolmanagement/schools");
+          return;
+        }
         const isPortalRole = data.user.role === "PARENT" || data.user.role === "STUDENT";
         router.push(isPortalRole ? "/schoolmanagement/portal" : "/schoolmanagement");
       },

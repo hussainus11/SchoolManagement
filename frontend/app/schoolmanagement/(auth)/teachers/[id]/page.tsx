@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { BackButton } from "@/components/back-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,6 +68,7 @@ export default function TeacherDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
+        <BackButton href="/schoolmanagement/teachers" />
         <PhotoUpload
           imageUrl={teacher.photoUrl}
           fallbackText={`${teacher.user.firstName[0] ?? ""}${teacher.user.lastName[0] ?? ""}`}

@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
 
+import { BackButton } from "@/components/back-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,6 +49,7 @@ export default function StudentDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
+        <BackButton href="/schoolmanagement/students" />
         <PhotoUpload
           imageUrl={student.photoUrl}
           fallbackText={`${student.firstName[0] ?? ""}${student.lastName[0] ?? ""}`}

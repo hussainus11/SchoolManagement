@@ -5,14 +5,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
-import { LogOutIcon, UserCircle2Icon } from "lucide-react";
+import { LogOutIcon } from "lucide-react";
 import { DotsVerticalIcon } from "@radix-ui/react-icons";
 import { useLogout } from "@/hooks/use-auth";
 import { useAuthStore } from "@/lib/store/auth-store";
@@ -71,15 +70,6 @@ export function NavUser() {
                 </div>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem asChild>
-                <a href="/schoolmanagement/pages/settings">
-                  <UserCircle2Icon />
-                  Account
-                </a>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={handleLogout} disabled={logout.isPending}>
               <LogOutIcon />

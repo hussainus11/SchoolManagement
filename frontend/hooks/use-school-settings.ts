@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api/client";
+import type { BillingRecord } from "@/lib/billing-status";
 
 export interface School {
   id: string;
@@ -15,6 +16,11 @@ export interface School {
   idCardForegroundColor: string;
   idCardBackgroundImageUrl: string | null;
   isActive: boolean;
+  nextBillingDate: string | null;
+}
+
+export interface MyBilling extends School {
+  billingRecords: BillingRecord[];
 }
 
 export interface Branch {
@@ -36,10 +42,18 @@ export interface AcademicYear {
   isCurrent: boolean;
 }
 
-export function useSchool() {
+export function useSchool(enabled = true) {
   return useQuery({
     queryKey: ["school"],
-    queryFn: () => apiFetch<School>("/schools/me")
+    queryFn: () => apiFetch<School>("/schools/me"),
+    enabled
+  });
+}
+
+export function useMyBilling() {
+  return useQuery({
+    queryKey: ["school", "billing"],
+    queryFn: () => apiFetch<MyBilling>("/schools/me/billing")
   });
 }
 

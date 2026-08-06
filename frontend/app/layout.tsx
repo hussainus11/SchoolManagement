@@ -1,4 +1,5 @@
 import React from "react";
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "next-themes";
@@ -12,6 +13,15 @@ import { ActiveThemeProvider } from "@/components/active-theme";
 import { DEFAULT_THEME } from "@/lib/themes";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/lib/query-provider";
+
+// Overridden client-side once a school's own name loads (see DynamicBranding), so the tab shows
+// just the school's name once signed in — this template only governs the pre-login / SSR title.
+export const metadata: Metadata = {
+  title: {
+    default: "School Management",
+    template: "%s - School Management"
+  }
+};
 
 export default async function RootLayout({
   children

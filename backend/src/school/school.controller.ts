@@ -37,6 +37,11 @@ export class SchoolController {
     return this.schoolService.findByIdOrThrow(user.schoolId!);
   }
 
+  @Get("me/billing")
+  getMyBilling(@CurrentUser() user: JwtPayload) {
+    return this.schoolService.findAdminDetail(user.schoolId!);
+  }
+
   @Patch("me")
   @Roles(Role.SCHOOL_ADMIN)
   updateMySchool(@CurrentUser() user: JwtPayload, @Body() dto: UpdateSchoolDto) {

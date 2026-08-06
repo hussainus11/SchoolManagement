@@ -19,7 +19,6 @@ import {
 import { useAuthStore } from "@/lib/store/auth-store";
 import { ApiError } from "@/lib/api/client";
 import { CreateLeaveRequestDialog } from "./create-leave-request-dialog";
-import { ManageLeaveTypesDialog } from "./manage-leave-types-dialog";
 
 const STATUS_VARIANT: Record<LeaveStatus, "default" | "secondary" | "destructive" | "outline"> = {
   PENDING: "secondary",
@@ -108,7 +107,6 @@ export default function LeavePage() {
           </p>
         </div>
         <div className="flex gap-2">
-          {isAdmin && <ManageLeaveTypesDialog />}
           <CreateLeaveRequestDialog />
         </div>
       </div>
