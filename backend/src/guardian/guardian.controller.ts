@@ -25,6 +25,11 @@ export class GuardianController {
     return this.guardianService.findOneForSchool(user.schoolId!, id);
   }
 
+  @Get(":id/ledger")
+  getLedger(@CurrentUser() user: JwtPayload, @Param("id") id: string) {
+    return this.guardianService.getLedger(user.schoolId!, id);
+  }
+
   @Post()
   create(@CurrentUser() user: JwtPayload, @Body() dto: CreateGuardianDto) {
     return this.guardianService.create(user.schoolId!, dto);

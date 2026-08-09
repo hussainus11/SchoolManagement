@@ -194,6 +194,7 @@ model School {
   staff               Staff[]
   students            Student[]
   guardians           Guardian[]
+  guardianDiscounts   GuardianDiscount[]
   studentAttendances  StudentAttendance[]
   teacherAttendances  TeacherAttendance[]
   periods             Period[]
@@ -656,11 +657,34 @@ model Guardian {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  school   School            @relation(fields: [schoolId], references: [id])
-  user     User?             @relation(fields: [userId], references: [id])
-  students StudentGuardian[]
+  school    School             @relation(fields: [schoolId], references: [id])
+  user      User?              @relation(fields: [userId], references: [id])
+  students  StudentGuardian[]
+  discounts GuardianDiscount[]
 
   @@index([schoolId])
+}
+
+/** A discount applied to a guardian rather than a single student — e.g. a collective/sibling
+ *  discount for a family with multiple enrolled children. Applied on top of any StudentDiscount
+ *  when generating each linked child's invoice, using the same fee-head-scoping rules. */
+model GuardianDiscount {
+  id         String       @id @default(cuid())
+  schoolId   String
+  guardianId String
+  feeHeadId  String?
+  type       DiscountType
+  value      Decimal      @db.Decimal(10, 2)
+  reason     String?
+  isActive   Boolean      @default(true)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  school   School   @relation(fields: [schoolId], references: [id])
+  guardian Guardian @relation(fields: [guardianId], references: [id])
+  feeHead  FeeHead? @relation(fields: [feeHeadId], references: [id])
+
+  @@index([schoolId, guardianId])
 }
 
 model StudentGuardian {
@@ -791,10 +815,11 @@ model FeeHead {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  school        School            @relation(fields: [schoolId], references: [id])
-  feeStructures FeeStructure[]
-  invoiceItems  InvoiceItem[]
-  discounts     StudentDiscount[]
+  school            School             @relation(fields: [schoolId], references: [id])
+  feeStructures     FeeStructure[]
+  invoiceItems      InvoiceItem[]
+  discounts         StudentDiscount[]
+  guardianDiscounts GuardianDiscount[]
 
   @@unique([schoolId, name])
 }

@@ -18,6 +18,7 @@ export const RESOURCE_CATALOG: ResourceCatalogItem[] = [
   { key: "teachers", label: "Teachers", group: "People & Structure" },
   { key: "staff", label: "Staff", group: "People & Structure" },
   { key: "students", label: "Students", group: "People & Structure" },
+  { key: "guardians", label: "Guardians", group: "People & Structure" },
 
   { key: "attendance", label: "Attendance", group: "Daily Operations" },
   { key: "timetable", label: "Timetable", group: "Daily Operations" },

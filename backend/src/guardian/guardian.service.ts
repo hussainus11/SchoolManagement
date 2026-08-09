@@ -28,6 +28,7 @@ export class GuardianService {
             }
           : {})
       },
+      include: { _count: { select: { students: true } } },
       orderBy: { createdAt: "desc" }
     });
   }
@@ -36,6 +37,61 @@ export class GuardianService {
     const guardian = await this.prisma.guardian.findFirst({ where: { id, schoolId } });
     if (!guardian) throw new NotFoundException("Guardian not found");
     return guardian;
+  }
+
+  /** Consolidated view across every child linked to this guardian — combined billed/paid/due
+   *  totals plus each child's invoices, so a family's account can be seen and managed as one
+   *  instead of piecing it together from separate per-student invoice lists. */
+  async getLedger(schoolId: string, guardianId: string) {
+    const guardian = await this.findOneForSchool(schoolId, guardianId);
+
+    const links = await this.prisma.studentGuardian.findMany({
+      where: { guardianId },
+      include: {
+        student: { include: { section: { include: { class: true } } } }
+      }
+    });
+    const studentIds = links.map((l) => l.studentId);
+
+    const invoices = studentIds.length
+      ? await this.prisma.invoice.findMany({
+          where: { schoolId, studentId: { in: studentIds }, deletedAt: null },
+          include: {
+            student: true,
+            items: { include: { feeHead: true } },
+            payments: { orderBy: { paidAt: "desc" } }
+          },
+          orderBy: { issueDate: "desc" }
+        })
+      : [];
+
+    const discounts = await this.prisma.guardianDiscount.findMany({
+      where: { schoolId, guardianId },
+      include: { feeHead: true },
+      orderBy: { createdAt: "desc" }
+    });
+
+    const totals = invoices.reduce(
+      (acc, invoice) => ({
+        billed: acc.billed + Number(invoice.total),
+        paid: acc.paid + Number(invoice.amountPaid),
+        discount: acc.discount + Number(invoice.discountTotal)
+      }),
+      { billed: 0, paid: 0, discount: 0 }
+    );
+
+    return {
+      guardian,
+      children: links.map((link) => ({
+        studentId: link.studentId,
+        relation: link.relation,
+        isPrimary: link.isPrimary,
+        student: link.student
+      })),
+      discounts,
+      invoices,
+      totals: { ...totals, due: totals.billed - totals.paid }
+    };
   }
 
   create(schoolId: string, dto: CreateGuardianDto) {

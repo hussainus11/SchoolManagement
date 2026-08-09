@@ -53,6 +53,7 @@ import {
   UserPlusIcon,
   UserRoundIcon,
   UsersIcon,
+  UsersRoundIcon,
   WalletIcon,
   type LucideIcon
 } from "lucide-react";
@@ -168,6 +169,12 @@ export const navItems: NavGroup[] = [
         href: "/schoolmanagement/students",
         icon: UsersIcon,
         resource: "students"
+      },
+      {
+        title: "Guardians",
+        href: "/schoolmanagement/guardians",
+        icon: UsersRoundIcon,
+        resource: "guardians"
       }
     ]
   },

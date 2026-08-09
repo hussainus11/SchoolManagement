@@ -85,13 +85,28 @@ export class InvoiceService {
       where: { schoolId, studentId: student.id, isActive: true }
     });
 
+    // Collective/sibling discounts live on the guardian, not the student, so a family with
+    // multiple enrolled children gets it applied to each child's invoice individually rather
+    // than needing to be configured per class or per student.
+    const guardianLinks = await tx.studentGuardian.findMany({
+      where: { studentId: student.id },
+      select: { guardianId: true }
+    });
+    const guardianDiscounts = guardianLinks.length
+      ? await tx.guardianDiscount.findMany({
+          where: { schoolId, guardianId: { in: guardianLinks.map((g) => g.guardianId) }, isActive: true }
+        })
+      : [];
+
+    const allDiscounts = [...discounts, ...guardianDiscounts];
+
     let subtotal = 0;
     let discountTotal = 0;
     const items: { feeHeadId: string; amount: number; discount: number }[] = [];
 
     for (const structure of structures) {
       const amount = Number(structure.amount);
-      const applicable = discounts.filter((d) => !d.feeHeadId || d.feeHeadId === structure.feeHeadId);
+      const applicable = allDiscounts.filter((d) => !d.feeHeadId || d.feeHeadId === structure.feeHeadId);
       let discount = 0;
       for (const d of applicable) {
         discount += d.type === "PERCENTAGE" ? (amount * Number(d.value)) / 100 : Number(d.value);
