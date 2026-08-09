@@ -39,6 +39,13 @@ export class SectionService {
     return this.prisma.section.create({ data });
   }
 
+  createWithinTransaction(
+    tx: Prisma.TransactionClient,
+    data: { classId: string; name: string; capacity?: number }
+  ) {
+    return tx.section.create({ data });
+  }
+
   async update(schoolId: string, id: string, data: Prisma.SectionUpdateInput) {
     await this.findOneForSchool(schoolId, id);
     return this.prisma.section.update({ where: { id }, data });

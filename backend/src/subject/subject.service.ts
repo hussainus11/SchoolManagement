@@ -21,6 +21,10 @@ export class SubjectService {
     return this.prisma.subject.create({ data: { ...data, schoolId } });
   }
 
+  createWithinTransaction(tx: Prisma.TransactionClient, schoolId: string, data: { name: string; code: string }) {
+    return tx.subject.create({ data: { ...data, schoolId } });
+  }
+
   async update(schoolId: string, id: string, data: Prisma.SubjectUpdateInput) {
     await this.findOneForSchool(schoolId, id);
     return this.prisma.subject.update({ where: { id }, data });

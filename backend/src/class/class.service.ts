@@ -42,6 +42,14 @@ export class ClassService {
     return this.prisma.class.create({ data: { ...data, schoolId } });
   }
 
+  createWithinTransaction(
+    tx: Prisma.TransactionClient,
+    schoolId: string,
+    data: { branchId: string; academicYearId: string; name: string; order?: number }
+  ) {
+    return tx.class.create({ data: { ...data, schoolId } });
+  }
+
   async update(schoolId: string, id: string, data: Prisma.ClassUpdateInput) {
     await this.findOneForSchool(schoolId, id);
     return this.prisma.class.update({ where: { id }, data });

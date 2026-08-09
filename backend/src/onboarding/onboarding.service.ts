@@ -4,8 +4,11 @@ import { AcademicYearService } from "../academic-year/academic-year.service";
 import { AuditService } from "../audit/audit.service";
 import { AuthService } from "../auth/auth.service";
 import { BranchService } from "../branch/branch.service";
+import { ClassService } from "../class/class.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { SchoolService } from "../school/school.service";
+import { SectionService } from "../section/section.service";
+import { SubjectService } from "../subject/subject.service";
 import { UsersService } from "../users/users.service";
 import { OnboardSchoolDto } from "./dto/onboard-school.dto";
 
@@ -22,6 +25,35 @@ function slugify(input: string) {
     .replace(/(^-|-$)+/g, "");
 }
 
+// A generic K-10 structure with one starter section each, so a new school isn't starting from a
+// completely blank slate. All of this is just a head start — the admin can rename, add to, or
+// delete anything here afterward through the normal Classes/Subjects screens.
+const DEFAULT_CLASS_NAMES = [
+  "Nursery",
+  "KG",
+  "Class 1",
+  "Class 2",
+  "Class 3",
+  "Class 4",
+  "Class 5",
+  "Class 6",
+  "Class 7",
+  "Class 8",
+  "Class 9",
+  "Class 10"
+];
+
+const DEFAULT_SUBJECTS: { name: string; code: string }[] = [
+  { name: "English", code: "ENG" },
+  { name: "Mathematics", code: "MATH" },
+  { name: "Science", code: "SCI" },
+  { name: "Social Studies", code: "SST" },
+  { name: "Computer Science", code: "CS" },
+  { name: "Art & Craft", code: "ART" },
+  { name: "Physical Education", code: "PE" },
+  { name: "Music", code: "MUS" }
+];
+
 @Injectable()
 export class OnboardingService {
   constructor(
@@ -29,6 +61,9 @@ export class OnboardingService {
     private readonly schoolService: SchoolService,
     private readonly branchService: BranchService,
     private readonly academicYearService: AcademicYearService,
+    private readonly classService: ClassService,
+    private readonly sectionService: SectionService,
+    private readonly subjectService: SubjectService,
     private readonly usersService: UsersService,
     private readonly authService: AuthService,
     private readonly auditService: AuditService
@@ -59,11 +94,25 @@ export class OnboardingService {
           code: "MAIN"
         });
 
-        await this.academicYearService.createWithinTransaction(tx, school.id, {
+        const academicYear = await this.academicYearService.createWithinTransaction(tx, school.id, {
           name: dto.academicYearName,
           startDate: new Date(dto.academicYearStart),
           endDate: new Date(dto.academicYearEnd)
         });
+
+        for (const [index, name] of DEFAULT_CLASS_NAMES.entries()) {
+          const cls = await this.classService.createWithinTransaction(tx, school.id, {
+            branchId: branch.id,
+            academicYearId: academicYear.id,
+            name,
+            order: index
+          });
+          await this.sectionService.createWithinTransaction(tx, { classId: cls.id, name: "A" });
+        }
+
+        for (const subject of DEFAULT_SUBJECTS) {
+          await this.subjectService.createWithinTransaction(tx, school.id, subject);
+        }
 
         const adminUser = await this.usersService.createWithinTransaction(tx, {
           email: dto.adminEmail,
