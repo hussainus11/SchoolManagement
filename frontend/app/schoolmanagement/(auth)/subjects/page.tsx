@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { ColumnDef } from "@tanstack/react-table";
 import { LayoutGridIcon, ListIcon, PlusIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -9,6 +10,7 @@ import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTable } from "@/components/data-table";
 import { DataTableRowActions } from "@/components/data-table-row-actions";
 import {
   Dialog,
@@ -21,7 +23,6 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PhotoUpload } from "@/components/photo-upload";
 import {
@@ -41,6 +42,8 @@ const subjectFormSchema = z.object({
 });
 type SubjectFormValues = z.infer<typeof subjectFormSchema>;
 
+const GRID_PAGE_SIZE = 12;
+
 export default function SubjectsPage() {
   const { data: subjects, isPending } = useSubjects();
   const deleteSubject = useDeleteSubject();
@@ -50,6 +53,7 @@ export default function SubjectsPage() {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
+  const [gridPage, setGridPage] = useState(0);
 
   function handleUpload(id: string, file: File) {
     setUploadingId(id);
@@ -76,6 +80,52 @@ export default function SubjectsPage() {
       onSettled: () => setDeletingId(null)
     });
   }
+
+  const gridPageCount = Math.max(Math.ceil((subjects?.length ?? 0) / GRID_PAGE_SIZE), 1);
+  const currentGridPage = Math.min(gridPage, gridPageCount - 1);
+  const pagedSubjects = (subjects ?? []).slice(
+    currentGridPage * GRID_PAGE_SIZE,
+    currentGridPage * GRID_PAGE_SIZE + GRID_PAGE_SIZE
+  );
+
+  const columns: ColumnDef<Subject>[] = useMemo(
+    () => [
+      {
+        id: "image",
+        header: "",
+        cell: ({ row }) => (
+          <PhotoUpload
+            imageUrl={row.original.imageUrl}
+            fallbackText={row.original.code.slice(0, 2).toUpperCase()}
+            shape="square"
+            size="sm"
+            isUploading={uploadingId === row.original.id}
+            onUpload={(file) => handleUpload(row.original.id, file)}
+            onRemove={row.original.imageUrl ? () => handleRemoveImage(row.original.id) : undefined}
+          />
+        )
+      },
+      { accessorKey: "name", header: "Name" },
+      { accessorKey: "code", header: "Code" },
+      {
+        id: "actions",
+        header: "",
+        cell: ({ row }) => (
+          <div className="flex justify-end">
+            <DataTableRowActions
+              onEdit={() => setEditingSubject(row.original)}
+              onDelete={() => handleDelete(row.original)}
+              isDeleting={deleteSubject.isPending && deletingId === row.original.id}
+              deleteTitle="Delete this subject?"
+              deleteDescription={`This will permanently remove ${row.original.name} and cannot be undone.`}
+            />
+          </div>
+        )
+      }
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [uploadingId, deletingId, deleteSubject.isPending]
+  );
 
   return (
     <div className="space-y-4">
@@ -111,78 +161,60 @@ export default function SubjectsPage() {
           <CardContent className="text-muted-foreground py-10 text-center">No subjects yet.</CardContent>
         </Card>
       ) : view === "grid" ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {subjects.map((subject) => (
-            <Card key={subject.id} className="overflow-hidden py-0">
-              <PhotoUpload
-                imageUrl={subject.imageUrl}
-                fallbackText={subject.code.slice(0, 2).toUpperCase()}
-                shape="square"
-                size="full"
-                className="block w-full"
-                isUploading={uploadingId === subject.id}
-                onUpload={(file) => handleUpload(subject.id, file)}
-                onRemove={subject.imageUrl ? () => handleRemoveImage(subject.id) : undefined}
-              />
-              <CardContent className="flex items-start justify-between gap-2 px-4 pb-4">
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{subject.name}</p>
-                  <p className="text-muted-foreground text-sm">{subject.code}</p>
-                </div>
-                <DataTableRowActions
-                  onEdit={() => setEditingSubject(subject)}
-                  onDelete={() => handleDelete(subject)}
-                  isDeleting={deleteSubject.isPending && deletingId === subject.id}
-                  deleteTitle="Delete this subject?"
-                  deleteDescription={`This will permanently remove ${subject.name} and cannot be undone.`}
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {pagedSubjects.map((subject) => (
+              <Card key={subject.id} className="overflow-hidden py-0">
+                <PhotoUpload
+                  imageUrl={subject.imageUrl}
+                  fallbackText={subject.code.slice(0, 2).toUpperCase()}
+                  shape="square"
+                  size="full"
+                  className="block w-full"
+                  isUploading={uploadingId === subject.id}
+                  onUpload={(file) => handleUpload(subject.id, file)}
+                  onRemove={subject.imageUrl ? () => handleRemoveImage(subject.id) : undefined}
                 />
-              </CardContent>
-            </Card>
-          ))}
+                <CardContent className="flex items-start justify-between gap-2 px-4 pb-4">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{subject.name}</p>
+                    <p className="text-muted-foreground text-sm">{subject.code}</p>
+                  </div>
+                  <DataTableRowActions
+                    onEdit={() => setEditingSubject(subject)}
+                    onDelete={() => handleDelete(subject)}
+                    isDeleting={deleteSubject.isPending && deletingId === subject.id}
+                    deleteTitle="Delete this subject?"
+                    deleteDescription={`This will permanently remove ${subject.name} and cannot be undone.`}
+                  />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          {gridPageCount > 1 && (
+            <div className="flex items-center justify-end gap-2">
+              <div className="text-muted-foreground flex-1 text-sm">
+                Page {currentGridPage + 1} of {gridPageCount}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setGridPage((p) => Math.max(p - 1, 0))}
+                disabled={currentGridPage === 0}>
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setGridPage((p) => Math.min(p + 1, gridPageCount - 1))}
+                disabled={currentGridPage >= gridPageCount - 1}>
+                Next
+              </Button>
+            </div>
+          )}
         </div>
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-16" />
-                  <TableHead>Name</TableHead>
-                  <TableHead>Code</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {subjects.map((subject) => (
-                  <TableRow key={subject.id}>
-                    <TableCell>
-                      <PhotoUpload
-                        imageUrl={subject.imageUrl}
-                        fallbackText={subject.code.slice(0, 2).toUpperCase()}
-                        shape="square"
-                        size="sm"
-                        isUploading={uploadingId === subject.id}
-                        onUpload={(file) => handleUpload(subject.id, file)}
-                        onRemove={subject.imageUrl ? () => handleRemoveImage(subject.id) : undefined}
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium">{subject.name}</TableCell>
-                    <TableCell>{subject.code}</TableCell>
-                    <TableCell className="text-right">
-                      <DataTableRowActions
-                        onEdit={() => setEditingSubject(subject)}
-                        onDelete={() => handleDelete(subject)}
-                        isDeleting={deleteSubject.isPending && deletingId === subject.id}
-                        deleteTitle="Delete this subject?"
-                        deleteDescription={`This will permanently remove ${subject.name} and cannot be undone.`}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <DataTable columns={columns} data={subjects} isLoading={false} emptyMessage="No subjects yet." />
       )}
       <EditSubjectDialog subject={editingSubject} onOpenChange={(open) => !open && setEditingSubject(null)} />
     </div>
