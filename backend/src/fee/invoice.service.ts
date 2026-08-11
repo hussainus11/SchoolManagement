@@ -1,9 +1,10 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import * as crypto from "node:crypto";
 import { InvoiceStatus, Prisma } from "../../generated/prisma/client";
 import { AuditService } from "../audit/audit.service";
 import { NotificationService } from "../notification/notification.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { WhatsappService } from "../whatsapp/whatsapp.service";
 import { CreateInvoiceDto } from "./dto/create-invoice.dto";
 import { GenerateMonthlyInvoicesDto } from "./dto/generate-monthly-invoices.dto";
 import { GenerateStudentInvoiceDto } from "./dto/generate-student-invoice.dto";
@@ -22,21 +23,42 @@ interface StudentForInvoice {
 
 @Injectable()
 export class InvoiceService {
+  private readonly logger = new Logger(InvoiceService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
-    private readonly notificationService: NotificationService
+    private readonly notificationService: NotificationService,
+    private readonly whatsappService: WhatsappService
   ) {}
 
-  private notifyFeeDue(schoolId: string, studentId: string, period: string, total: number) {
-    return this.notificationService.notifyStudentGuardians(
+  private async notifyFeeDue(
+    schoolId: string,
+    student: StudentForInvoice & { firstName: string; lastName: string },
+    period: string,
+    total: number,
+    dueDate: Date
+  ) {
+    await this.notificationService.notifyStudentGuardians(
       schoolId,
-      studentId,
+      student.id,
       "FEE_DUE",
       "New invoice generated",
       `A new invoice for ${period} (total ${total.toFixed(2)}) has been generated.`,
       "/schoolmanagement/portal/fees"
     );
+
+    // Additive, best-effort: a school that hasn't connected WhatsApp (or any queueing failure)
+    // must never block invoice generation, which is why this is isolated in its own try/catch.
+    try {
+      await this.whatsappService.queueForStudentGuardians(schoolId, student.id, "fee_reminder", {
+        student_name: `${student.firstName} ${student.lastName}`,
+        amount: total.toFixed(2),
+        due_date: dueDate.toDateString()
+      });
+    } catch (error) {
+      this.logger.error(`Failed to queue WhatsApp fee reminder for student ${student.id}: ${(error as Error).message}`);
+    }
   }
 
   findAllForSchool(
@@ -149,7 +171,7 @@ export class InvoiceService {
       this.buildInvoiceForStudent(tx, schoolId, student, dto.academicYearId, dto.period, new Date(dto.dueDate))
     );
     if (!invoice) throw new BadRequestException("No monthly fee structure found for this student's class");
-    await this.notifyFeeDue(schoolId, student.id, dto.period, Number(invoice.total));
+    await this.notifyFeeDue(schoolId, student, dto.period, Number(invoice.total), new Date(dto.dueDate));
     return this.findOneForSchool(schoolId, invoice.id);
   }
 
@@ -181,7 +203,7 @@ export class InvoiceService {
       );
       if (invoice) {
         created++;
-        await this.notifyFeeDue(schoolId, student.id, dto.period, Number(invoice.total));
+        await this.notifyFeeDue(schoolId, student, dto.period, Number(invoice.total), new Date(dto.dueDate));
       } else skipped++;
     }
 
@@ -230,7 +252,7 @@ export class InvoiceService {
       }
     });
 
-    await this.notifyFeeDue(schoolId, student.id, dto.period, Number(invoice.total));
+    await this.notifyFeeDue(schoolId, student, dto.period, Number(invoice.total), new Date(dto.dueDate));
     return this.findOneForSchool(schoolId, invoice.id);
   }
 

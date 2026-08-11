@@ -123,6 +123,21 @@ enum NotificationType {
   GENERAL
 }
 
+enum WhatsAppConnectionStatus {
+  CONNECTING
+  CONNECTED
+  DISCONNECTED
+  ERROR
+}
+
+enum WhatsAppMessageStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
 enum AdmissionStatus {
   INQUIRY
   APPLIED
@@ -167,22 +182,24 @@ enum DocumentOwnerType {
 }
 
 model School {
-  id                       String   @id @default(cuid())
+  id                       String    @id @default(cuid())
   name                     String
-  slug                     String   @unique
+  slug                     String    @unique
   email                    String?
   phone                    String?
   address                  String?
   logoUrl                  String?
-  idCardBackgroundColor    String   @default("#1E3A8A")
-  idCardForegroundColor    String   @default("#FFFFFF")
+  idCardBackgroundColor    String    @default("#1E3A8A")
+  idCardForegroundColor    String    @default("#FFFFFF")
   idCardBackgroundImageUrl String?
-  isActive                 Boolean  @default(true)
-  /** When this school's current trial/paid period ends. Set to now + 10 days on registration;
-   *  extended by a SUPER_ADMIN via BillingRecord when the school pays. */
+  isActive                 Boolean   @default(true)
+  /**
+   * When this school's current trial/paid period ends. Set to now + 10 days on registration;
+   * extended by a SUPER_ADMIN via BillingRecord when the school pays.
+   */
   nextBillingDate          DateTime?
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @updatedAt
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
 
   branches            Branch[]
   academicYears       AcademicYear[]
@@ -238,10 +255,15 @@ model School {
   documents           Document[]
   customRoles         CustomRole[]
   billingRecords      BillingRecord[]
+  whatsappConnection  WhatsAppConnection?
+  whatsappTemplates   WhatsAppTemplate[]
+  whatsappMessages    WhatsAppMessageLog[]
 }
 
-/** One entry per time a SUPER_ADMIN extends a school's billing period, e.g. after receiving
- *  payment. periodStart/periodEnd capture what span this specific extension covers. */
+/**
+ * One entry per time a SUPER_ADMIN extends a school's billing period, e.g. after receiving
+ * payment. periodStart/periodEnd capture what span this specific extension covers.
+ */
 model BillingRecord {
   id           String   @id @default(cuid())
   schoolId     String
@@ -640,6 +662,7 @@ model Student {
   hostelAllocations   HostelAllocation[]
   disciplineIncidents DisciplineIncident[]
   alumniRecord        Alumni?
+  whatsappMessages    WhatsAppMessageLog[]
 
   @@unique([schoolId, admissionNumber])
   @@index([schoolId])
@@ -657,17 +680,20 @@ model Guardian {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  school    School             @relation(fields: [schoolId], references: [id])
-  user      User?              @relation(fields: [userId], references: [id])
-  students  StudentGuardian[]
-  discounts GuardianDiscount[]
+  school           School               @relation(fields: [schoolId], references: [id])
+  user             User?                @relation(fields: [userId], references: [id])
+  students         StudentGuardian[]
+  discounts        GuardianDiscount[]
+  whatsappMessages WhatsAppMessageLog[]
 
   @@index([schoolId])
 }
 
-/** A discount applied to a guardian rather than a single student — e.g. a collective/sibling
- *  discount for a family with multiple enrolled children. Applied on top of any StudentDiscount
- *  when generating each linked child's invoice, using the same fee-head-scoping rules. */
+/**
+ * A discount applied to a guardian rather than a single student — e.g. a collective/sibling
+ * discount for a family with multiple enrolled children. Applied on top of any StudentDiscount
+ * when generating each linked child's invoice, using the same fee-head-scoping rules.
+ */
 model GuardianDiscount {
   id         String       @id @default(cuid())
   schoolId   String
@@ -1594,4 +1620,99 @@ model Document {
   uploadedBy User   @relation(fields: [uploadedById], references: [id])
 
   @@index([schoolId, ownerType, ownerId])
+}
+
+/**
+ * A school's own WhatsApp Business connection, established via Meta's Embedded Signup.
+ * One per school — the access token is AES-256-GCM encrypted at rest (see EncryptionService)
+ * and is never returned to the frontend; only the backend decrypts it to call the Graph API.
+ */
+model WhatsAppConnection {
+  id                   String                   @id @default(cuid())
+  schoolId             String                   @unique
+  status               WhatsAppConnectionStatus @default(CONNECTING)
+  wabaId               String?
+  phoneNumberId        String?
+  businessId           String?
+  displayPhoneNumber   String?
+  verifiedName         String?
+  /**
+   * AES-256-GCM ciphertext (iv:authTag:data, base64) of the Meta system-user access token.
+   */
+  accessTokenEncrypted String?
+  tokenExpiresAt       DateTime?
+  lastError            String?
+  connectedAt          DateTime?
+  disconnectedAt       DateTime?
+  metadata             Json?
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @updatedAt
+
+  school   School               @relation(fields: [schoolId], references: [id])
+  messages WhatsAppMessageLog[]
+
+  @@index([schoolId])
+}
+
+/**
+ * Maps a local template name (used in application code) to a Meta-approved WhatsApp message
+ * template. Templates must be created and approved in Meta Business Manager first — this table
+ * is just a registry, it never creates/approves templates via the API. schoolId is nullable for
+ * the shared default catalog (fee_reminder, attendance_alert, ...) seeded once at startup.
+ */
+model WhatsAppTemplate {
+  id               String   @id @default(cuid())
+  schoolId         String?
+  name             String
+  metaTemplateName String
+  language         String   @default("en_US")
+  category         String
+  isActive         Boolean  @default(true)
+  variablesSchema  Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  school School? @relation(fields: [schoolId], references: [id])
+
+  @@index([schoolId])
+}
+
+/**
+ * One row per WhatsApp notification attempt. Rows are created with status QUEUED and picked up
+ * by WhatsAppQueueSchedulerService (a @Cron worker, matching the existing BillingSchedulerService
+ * pattern) so a bulk notify never happens synchronously inside a single HTTP request.
+ */
+model WhatsAppMessageLog {
+  id            String                @id @default(cuid())
+  schoolId      String
+  connectionId  String
+  guardianId    String?
+  studentId     String?
+  phoneNumber   String
+  templateName  String
+  language      String
+  variables     Json?
+  status        WhatsAppMessageStatus @default(QUEUED)
+  metaMessageId String?
+  errorCode     String?
+  errorMessage  String?
+  attempts      Int                   @default(0)
+  nextAttemptAt DateTime?
+  queuedAt      DateTime              @default(now())
+  sentAt        DateTime?
+  deliveredAt   DateTime?
+  readAt        DateTime?
+  failedAt      DateTime?
+  metadata      Json?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  school     School             @relation(fields: [schoolId], references: [id])
+  connection WhatsAppConnection @relation(fields: [connectionId], references: [id])
+  guardian   Guardian?          @relation(fields: [guardianId], references: [id])
+  student    Student?           @relation(fields: [studentId], references: [id])
+
+  @@index([schoolId])
+  @@index([status, nextAttemptAt])
+  @@index([metaMessageId])
 }

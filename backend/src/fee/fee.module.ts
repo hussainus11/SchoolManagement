@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { AuditModule } from "../audit/audit.module";
 import { NotificationModule } from "../notification/notification.module";
+import { WhatsappModule } from "../whatsapp/whatsapp.module";
 import { FeeHeadController } from "./fee-head.controller";
 import { FeeHeadService } from "./fee-head.service";
 import { FeeStructureController } from "./fee-structure.controller";
@@ -13,7 +14,7 @@ import { StudentDiscountController } from "./student-discount.controller";
 import { StudentDiscountService } from "./student-discount.service";
 
 @Module({
-  imports: [AuditModule, NotificationModule],
+  imports: [AuditModule, NotificationModule, WhatsappModule],
   controllers: [
     FeeHeadController,
     FeeStructureController,

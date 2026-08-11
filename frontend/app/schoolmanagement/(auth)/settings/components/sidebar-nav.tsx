@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2Icon, CalendarOffIcon, CalendarRangeIcon, ClockIcon, IdCardIcon, SchoolIcon } from "lucide-react";
+import {
+  Building2Icon,
+  CalendarOffIcon,
+  CalendarRangeIcon,
+  ClockIcon,
+  IdCardIcon,
+  MessageCircleIcon,
+  SchoolIcon
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,7 +26,8 @@ const sidebarNavItems = [
   },
   { title: "ID card design", href: "/schoolmanagement/settings/id-cards", icon: IdCardIcon },
   { title: "Periods", href: "/schoolmanagement/settings/periods", icon: ClockIcon },
-  { title: "Leave groups", href: "/schoolmanagement/settings/leave-groups", icon: CalendarOffIcon }
+  { title: "Leave groups", href: "/schoolmanagement/settings/leave-groups", icon: CalendarOffIcon },
+  { title: "WhatsApp", href: "/schoolmanagement/settings/whatsapp", icon: MessageCircleIcon }
 ];
 
 export function SettingsSidebarNav() {

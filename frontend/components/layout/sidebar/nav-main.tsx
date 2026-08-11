@@ -41,6 +41,7 @@ import {
   LibraryIcon,
   MapPinIcon,
   MegaphoneIcon,
+  MessageCircleIcon,
   PackageIcon,
   ReceiptIcon,
   ReceiptTextIcon,
@@ -126,6 +127,7 @@ export const navItems: NavGroup[] = [
           { title: "ID card design", href: "/schoolmanagement/settings/id-cards", icon: IdCardIcon },
           { title: "Periods", href: "/schoolmanagement/settings/periods", icon: ClockIcon },
           { title: "Leave groups", href: "/schoolmanagement/settings/leave-groups", icon: CalendarOffIcon },
+          { title: "WhatsApp", href: "/schoolmanagement/settings/whatsapp", icon: MessageCircleIcon },
           { title: "Billing", href: "/schoolmanagement/settings/billing", icon: CreditCardIcon }
         ]
       },

@@ -21,7 +21,9 @@ function allowedOrigins(): string[] {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // rawBody: true lets the WhatsApp webhook controller verify Meta's X-Hub-Signature-256 header,
+  // which must be computed over the exact bytes Meta sent, not the re-serialized parsed JSON.
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
 
   const origins = allowedOrigins();
   app.enableCors({

@@ -49,6 +49,7 @@ import { AlumniModule } from './alumni/alumni.module';
 import { DocumentModule } from './document/document.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { CustomRoleModule } from './custom-role/custom-role.module';
+import { WhatsappModule } from './whatsapp/whatsapp.module';
 
 @Module({
   imports: [
@@ -95,6 +96,7 @@ import { CustomRoleModule } from './custom-role/custom-role.module';
     DocumentModule,
     DashboardModule,
     CustomRoleModule,
+    WhatsappModule,
   ],
   controllers: [AppController],
   providers: [
